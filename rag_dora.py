@@ -6,13 +6,13 @@ import openai
 from deep_translator import GoogleTranslator
 from langdetect import detect
 
-openai.api_key = "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"
-# === CONFIGURARE ===
-DOCX_PATH = "DORA.docx"  # <-- înlocuiește cu calea corectă spre fișierul tău
-USER_INPUT = "Ce este Change Management?"
-USE_GPT = True  # setează pe False dacă vrei doar partea de retrieval
+openai.api_key = "AICI"
 
-# === 1. ÎNCĂRCARE ȘI PARSARE DOCUMENT WORD ===
+DOCX_PATH = "DORA.docx" 
+USER_INPUT = "Ce este Change Management?"
+USE_GPT = True  
+
+
 doc = Document(DOCX_PATH)
 chunks = []
 section_titles = []
@@ -29,18 +29,18 @@ for para in doc.paragraphs:
     chunks.append(chunk_text)
     section_titles.append(current_section or "N/A")
 
-# === 2. EMBEDDING-URI LOCALE CU SENTENCE-TRANSFORMERS ===
+
 print("Generăm embedding-uri...")
 model = SentenceTransformer('all-mpnet-base-v2')
 embeddings = model.encode(chunks, show_progress_bar=True)
 embeddings = np.array(embeddings).astype('float32')
 
-# === 3. INDEXARE FAISS ===
+
 index = faiss.IndexFlatL2(embeddings.shape[1])
 index.add(embeddings)
 print("Index FAISS creat cu", index.ntotal, "fragmente.")
 
-# === 4. DETECTARE LIMBĂ ȘI TRADUCERE ÎNTREBARE ===
+
 
 translation_prompt = f"Please translate the following question from Romanian to English, keeping the original meaning intact:\n\n'{USER_INPUT}'"
 
@@ -58,7 +58,7 @@ QUERY = translation_response.choices[0].message.content.strip()
 print("\n=== ÎNTREBARE TRADUSĂ DE GPT ===")
 print(QUERY)
 
-# === 5. INTEROGARE ===
+
 query_embedding = model.encode([QUERY])[0].astype('float32')
 D, I = index.search(np.array([query_embedding]), k=10)
 retrieved_chunks = [chunks[i] for i in I[0]]
@@ -67,9 +67,9 @@ print("\n=== FRAGMENTE RELEVANTE ===")
 for chunk in retrieved_chunks:
     print("-", chunk[:300].replace("\n", " "), "...\n")
 
-# === 6. INTEGRARE CU GPT (OPȚIONAL) ===
+
 if USE_GPT:
-    openai.api_key = "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"  # <-- înlocuiește cu cheia ta
+    openai.api_key = "AICI"  # <-- înlocuiește cu cheia ta
     context = "\n\n".join(retrieved_chunks)
     prompt = f"Use the context below from the DORA document to answer the question. Also, mention at the end where was the information extracted from, i want reasoning. I want a clear structure. Please Translate it in romanian\n\nContext:\n{context}\n\nQuestion: {QUERY}\nAnswer:"
 
